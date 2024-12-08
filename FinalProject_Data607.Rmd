@@ -1,0 +1,324 @@
+---
+title: "Final_Project_Data607"
+author: "Ahmed Hassan, Crystal Quezada"
+date: "2024-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)                         
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+
+# install packages
+library(tidyverse)
+library(tidyr)
+library(dbplyr)
+install.packages("janitor")
+library(janitor)
+```
+
+
+# Abstract
+
+This project investigates the relationship between socioeconomic factors and the housing market in the United States, focusing on three metropolitan areas: New York City, Miami, and Los Angeles. Utilizing datasets on median housing prices, homeownership rates, education, jobs, and household income across multiple years and quarters, the study aims to uncover trends and disparities in housing affordability and accessibility. The analysis incorporates visualizations and highlights the potential impact of regional economic conditions and policy decisions. By understanding these patterns, this research seeks to inform strategies for improving housing equity and affordability, especially in urban areas with diverse socioeconomic dynamics. The findings contribute to a broader discourse on the intersection of economic policy, urban development, and social equity in the U.S. housing market.
+
+
+## Housing Prices
+
+First, the raw housing data is loaded directly from a CSV file hosted in a GitHub repository.
+
+```{r load raw housing data}
+# load data
+rawhousingprices <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Media%20Housing%20Price.csv"
+housingprices <- read.csv(rawhousingprices)
+head(housingprices)
+```
+
+
+Since our focus is on three specific cities, we filter the data to include only New York, Miami, and Los Angeles. We then clean the dataset by renaming the variables and restructuring it from a wide format to a longer format.
+
+```{r clean housing prices}
+filtered_housingprices <- housingprices %>%
+  filter(RegionName %in% c("New York, NY", "Miami, FL", "Los Angeles, CA")) %>%
+  pivot_longer(
+    cols = starts_with("X20"),  
+    names_to = "Month",     
+    values_to = "Value"     
+  ) %>%
+  mutate(Month = as.Date(Month, format = "X%Y.%m.%d")) %>%
+  mutate(Year = format(Month, "%Y")) %>%
+  group_by(Year, RegionName) %>%  
+  mutate(Yearly_Mean = mean(Value, na.rm = TRUE)) %>%  
+  select("SizeRank", "RegionName", "Year", "Yearly_Mean") %>%
+  distinct()
+head(filtered_housingprices)
+```
+
+
+Since 2018, housing prices have risen significantly across all three cities, with the most dramatic increase observed in Los Angeles.
+
+```{r ggplot housing mean over the years}
+ggplot(filtered_housingprices, aes(x = Year, y = Yearly_Mean, color = RegionName, group = RegionName)) +
+  geom_line(size = 1) + 
+  geom_text(aes(label = round(Yearly_Mean, 2)), vjust = -0.5, size = 3, check_overlap = TRUE) + 
+  labs(
+    title = "Yearly Mean Housing Prices for New York, Miami, and Los Angeles",
+    x = "Year",
+    y = "Yearly Mean Housing Price"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+The rate of change in housing prices shows that Miami experienced the most significant fluctuation, with a nearly 28% increase. It's also the only city to see a negative change in 2024, at -4%. On the other hand, both New York and Los Angeles saw more stable price changes, with no year surpassing a 10%. 
+
+```{r rate of change for housing prices}
+housing_rate_of_change <- filtered_housingprices %>%
+  group_by(RegionName) %>%
+  arrange(Year) %>%
+  mutate(
+    Rate_of_Change = (Yearly_Mean - lag(Yearly_Mean)) / lag(Yearly_Mean) * 100
+  ) %>%
+  filter(!is.na(Rate_of_Change))
+
+ggplot(housing_rate_of_change, aes(x = Year, y = Rate_of_Change, fill = RegionName)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  geom_text(aes(label = round(Rate_of_Change, 2)),  
+            position = position_dodge(width = 0.8),    
+            vjust = -0.5, size = 3) +                
+  labs(
+    title = "Year-over-Year Rate of Change in Housing Prices",
+    subtitle = "For New York, Los Angeles, and Miami",
+    x = "Year",
+    y = "Rate of Change (%)",
+    fill = "City"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+Three expensive cities — Los Angeles is the most expensive city to buy a home in. While Miami has less expensive homes than LA or New York, it does skew to the right, meaning there are more higher valued homes than not.
+
+```{r housing prices anova}
+anova_housingprices <- aov(Yearly_Mean ~ RegionName, data = filtered_housingprices)
+summary(anova_housingprices)
+
+ggplot(filtered_housingprices, aes(x = RegionName, y = Yearly_Mean, fill = RegionName)) +
+  geom_boxplot() +
+  labs(title = "ANOVA Comparison of Housing Prices by Region")
+```
+
+
+# Median Income
+
+Again, we load the CSV file from GitHub.
+
+```{r load median income data}
+rawincome <- read.csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Income.csv")
+head(rawincome)
+```
+
+
+Then, we filter for the appropriate cities while reformatting the column names and structure.
+
+```{r clean income data}
+filtered_income <- rawincome %>% 
+  filter(Metropolitan.Statistical.Areas %in% c("Los Angeles-Long Beach-Anaheim, CA", "Miami-Fort Lauderdale-Pompano Beach, FL", "New York-Newark-Jersey City, NY-NJ-PA") ) %>% 
+  rename_with(~ gsub("^X", "", .x), starts_with("X")) %>% 
+  pivot_longer(
+    cols = starts_with("20"),  
+    names_to = "Income by Year",         
+    values_to = "Average Income"         
+  ) %>% 
+  mutate(`Income by Year` = str_remove(`Income by Year`, "\\.Dollars"))
+head(filtered_income)
+```
+
+
+In recent years, the average income in the New York area has seen notable growth, making it the highest among the three regions. Miami surpassed Los Angeles' 2021 income in both 2022 and 2023. Meanwhile, Los Angeles has experienced the slowest growth in comparison.
+
+```{r ggplot average income}
+ggplot(filtered_income, aes(x = `Income by Year`, y = `Average Income`, 
+                            group = Metropolitan.Statistical.Areas, 
+                            color = Metropolitan.Statistical.Areas)) +
+  geom_line(size = 1.2) + 
+  geom_point(size = 3) +   
+  labs(
+    title = "Average Income by Year in Metropolitan Areas",
+    x = "Year",
+    y = "Average Income (Dollars)",
+    color = "Metropolitan Areas"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+For both 2022 and 2023, Miami had the greatest change of income growth, followed by New York and Los Angeles.
+
+```{r income rate of change}
+filtered_income_num <- filtered_income %>%
+  mutate(`Average Income` = as.numeric(gsub(",", "", gsub("\\$", "", `Average Income`))))
+
+filtered_income_change <- filtered_income_num %>%
+  arrange(Metropolitan.Statistical.Areas, `Income by Year`) %>%
+  group_by(Metropolitan.Statistical.Areas) %>%
+  mutate(rate_of_change = (`Average Income` - lag(`Average Income`)) / lag(`Average Income`) * 100)
+
+ggplot(filtered_income_change, aes(x = `Income by Year`, y = rate_of_change, 
+                            fill = Metropolitan.Statistical.Areas, 
+                            label = round(rate_of_change, 2))) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  geom_text(aes(label = round(rate_of_change, 2)), position = position_dodge(width = 0.8), vjust = -0.5) + 
+  labs(
+    title = "Rate of Change in Average Income by Year in Metropolitan Areas",
+    x = "Year",
+    y = "Rate of Change (%)",
+    fill = "Metropolitan Areas"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+A heatmap visual — where the darkest and highest income (above 90k) is found in the NY area as of 2023.
+
+```{r average income heatmap}
+filtered_income$`Average Income` <- as.numeric(gsub(",", "", filtered_income$`Average Income`))
+
+ggplot(filtered_income, aes(x = `Income by Year`, y = Metropolitan.Statistical.Areas, fill = `Average Income`)) +
+  geom_tile() +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(
+    title = "Heatmap of Average Income by Year and Metropolitan Area",
+    x = "Year",
+    y = "Metropolitan Area",
+    fill = "Average Income"
+  ) +
+  theme_minimal()
+```
+
+
+# Homeownership Rates
+
+For our homeownership rates data, we loaded the csv and removed the first few lines.
+
+```{r load homeownership data}
+rawhomeownership <- read_csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Homeownership%20Rates%20-%20Sheet1.csv")
+rawhomeownership$`Metropolitan Statistical Area` <- gsub("[,\\.]", "", rawhomeownership$`Metropolitan Statistical Area`)
+rawhomeownership <- rawhomeownership[-c(1, 2, 3), ]
+rawhomeownership
+```
+
+
+To clean our data, we had to restructure the columns and rearrange by Quarter and Year. Otherwise, our x-axis would present in alphabetical order, and therefore not in time order.
+
+```{r clean raw homeownership data}
+rawhomeownership <- rawhomeownership %>%
+  clean_names()
+rawhomeownership
+
+homeownership <- rawhomeownership %>%
+  filter(`metropolitan_statistical_area` %in% c("Los Angeles-Long Beach-Anaheim CA14", 
+                                                "Miami-Fort Lauderdale-West Palm Beach FL16", 
+                                                "New York-Newark-Jersey City NY-NJ-PA19")) %>% 
+  select(`metropolitan_statistical_area`, `first_quarter_2021`, `second_quarter_2021`, `third_quarter_2021`, `fourth_quarter_2021`, 
+         `first_quarter_2022`, `second_quarter_2022`, `third_quarter_2022`, `fourth_quarter_2022`, 
+         `first_quarter_2023`, `second_quarter_2023`, `third_quarter_2023`, `fourth_quarter_2023`) %>% 
+   pivot_longer(
+    cols = -`metropolitan_statistical_area`,
+    names_to = "year_quarter",            
+    values_to = "homeownership_rate"  
+  ) %>%
+  mutate(
+    quarter = case_when(
+      grepl("first", year_quarter) ~ "Q1",
+      grepl("second", year_quarter) ~ "Q2",
+      grepl("third", year_quarter) ~ "Q3",
+      grepl("fourth", year_quarter) ~ "Q4"
+    ),
+    year = sub(".*(\\d{4}).*", "\\1", year_quarter),
+    label = paste(quarter, year),         
+    label = factor(label, levels = c("Q1 2021", "Q2 2021", "Q3 2021", "Q4 2021", 
+                                     "Q1 2022", "Q2 2022", "Q3 2022", "Q4 2022", 
+                                     "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023"))
+  )
+homeownership
+```
+
+
+All areas show a downward trend in homeownership despite an upward trend in average income.
+
+```{r homeowneship rate regression}
+ggplot(homeownership, aes(x = label, y = `homeownership_rate`, color = `metropolitan_statistical_area`, group = `metropolitan_statistical_area`)) + 
+  geom_line(size = 1) + 
+  geom_point(size = 3) + 
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", size = 0.5) +  # Separate linear models for each region
+  labs(
+    title = "Homeownership Rates by Year and Metropolitan Area",
+    x = "Year and Quarter",
+    y = "Homeownership Rate (%)",
+    color = "Metropolitan Statistical Area"
+  ) + 
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+In fact, Los Angeles had the greatest drop in homeownership rates as of Q1 of 2023 at -32%. If we recall, Los Angeles had the most expensive housing prices, and the slowest average income growth. New York follows at -25%, despite have the highest average income of the areas.
+
+```{r homeownership rate of change}
+homeownership_change <- homeownership %>%
+  group_by(`metropolitan_statistical_area`) %>%
+  arrange(`metropolitan_statistical_area`, `label`) %>%
+  mutate(rate_of_change = (`homeownership_rate` - lag(`homeownership_rate`)) / lag(`homeownership_rate`) * 100)
+
+ggplot(homeownership_change, aes(x = label, y = rate_of_change, fill = `metropolitan_statistical_area`)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = round(rate_of_change, 2)), 
+            position = position_dodge(width = 0.8), 
+            vjust = -1, size = 2) + 
+  labs(
+    title = "Rate of Change in Homeownership Rates by Year and Metropolitan Area",
+    x = "Year and Quarter",
+    y = "Rate of Change (%)",
+    fill = "Metropolitan Statistical Area"
+  ) + 
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+```
+
+
+Here we load the data for non farmer jobs in the US since the 1990s.
+
+```{r load non farmer jobs data}
+raw_nonfarmer <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/total_non_farm_employment.csv"
+nonfarmerjobs <- read_csv(raw_nonfarmer)
+nonfarmerjobs
+```
+
+
+The number of non-farm jobs has steadily increased since 1990, with a significant drop in 2020 due to the pandemic. However, the job market has since rebounded, surpassing pre-pandemic levels. Non-farm jobs make up nearly 80% of the workforce contributing to the country's GDP. Despite this substantial contribution, homeownership rates have been declining, raising questions about the broader economic and social implications.
+
+```{r plot non farmer jobs}
+ggplot(nonfarmerjobs, aes(x = DATE, y = PAYEMS)) +
+  geom_line(color = "skyblue", size = 1) +
+  labs(
+    title = "Non Farmer Jobs Over the Years",
+    x = "Date",
+    y = "Non Farmer Job Count"
+  ) +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+# Conclusion
+
+The data on housing prices, average income, and homeownership rates across New York, Miami, and Los Angeles reveal notable disparities in the growth and stability of these metrics. Despite New York having the highest average income growth, it experienced a sharp decline in homeownership rates, mirroring a similar trend in Los Angeles around the same period (Q4 2022). Los Angeles, in particular, has shown the most significant challenges, with the slowest growth in income and a sharp decline in homeownership, making it the most vulnerable area in this study. In contrast, Miami demonstrated more stability, with a substantial increase in income and a lower rate of change in homeownership.
+
+It's important for policymakers and stakeholders in California to focus on initiatives that address the affordability crisis and improve access to homeownership. Potential solutions could include expanding affordable housing projects, offering homebuyer assistance programs, and addressing the root causes of income inequality. For New York, focusing on supporting sustainable growth in both income and homeownership could help mitigate the risks of economic disparity. Miami, while showing promising trends, could further benefit from targeted policies that ensure the continued growth of both its housing market and income levels.
+
+
