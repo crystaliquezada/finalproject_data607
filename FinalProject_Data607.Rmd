@@ -27,9 +27,77 @@ This project investigates the relationship between socioeconomic factors and the
 
 First, the raw housing data is loaded directly from a CSV file hosted in a GitHub repository.
 
+libraries
+```{r}
+library(readr)
+
+
+```
+
+load USA dataset
+```{r}
+spy_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/SPY%20ETF%20Stock%20Price%20History.csv"
+cpi_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/cpi.csv"
+electricity_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/electricity_price_city_usa.csv"
+monthly_median_housing_price_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/housing_monthly_data.csv"
+m2_money_supply_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/m2_money_supply.csv"
+median_house_prices_sold_usa_url <- "https://github.com/crystaliquezada/finalproject_data607/blob/main/data/usa/median_house_prices_sold_usa.csv"
+employment_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/total_non_farm_employment.csv"
+
+
+spy_df <- read_csv(spy_url)
+cpi_df <- read_csv(cpi_url)
+electricity_df <- read_csv(electricity_url)
+monthly_median_housing_price_df <- read_csv(monthly_median_housing_price_url)
+m2_money_supply_df <- read_csv(m2_money_supply_url)
+median_house_prices_sold_usa_df <- read_csv(median_house_prices_sold_usa_url)
+employment_df <- read_csv(employment_url)
+
+#temp code, will be removed later 
+head(spy_df)
+
+head(cpi_df)
+
+head(electricity_df)
+
+head(monthly_median_housing_price_df)
+
+head(m2_money_supply_df)
+
+head(median_house_prices_sold_usa_df)
+
+head(employment_df)
+
+
+
+```
+
+load nyc dataset
+```{r}
+
+```
+
+
+load miami dataset
+
+```{r}
+
+
+```
+
+
+
+
+load califonia dataset
+```{r}
+
+
+```
+
+
 ```{r load raw housing data}
 # load data
-rawhousingprices <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Media%20Housing%20Price.csv"
+rawhousingprices <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/Media%20Housing%20Price.csv"
 housingprices <- read.csv(rawhousingprices)
 head(housingprices)
 ```
