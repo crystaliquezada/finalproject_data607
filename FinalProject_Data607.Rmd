@@ -45,7 +45,7 @@ electricity_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproje
 m2_money_supply_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/m2_money_supply.csv"
 median_house_prices_sold_usa_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/median_house_prices_sold_usa.csv"
 employment_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/total_non_farm_employment.csv"
-
+median_household_income_usa_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/median_household_income_usa.csv"
 
 spy_df <- read_csv(spy_url)
 cpi_df <- read_csv(cpi_url)
@@ -53,7 +53,8 @@ electricity_df <- read_csv(electricity_url)
 m2_money_supply_df <- read_csv(m2_money_supply_url)
 median_house_prices_sold_usa_df <- read_csv(median_house_prices_sold_usa_url)
 employment_df <- read_csv(employment_url)
-
+median_household_income_usa_df <- read.csv(median_household_income_usa_url)
+head(median_household_income_usa_df)
 #temp code, will be removed later 
 head(spy_df)
 
@@ -145,24 +146,14 @@ rename_column <- function(df, old_col_name, new_col_name) {
   return(renamed_df)
 }
 
-
-
-san_francisco_median_income_df
-nyc_median_income_df
-miami_median_income_df
-cpi_df
-monthly_median_housing_price_df
-m2_money_supply_df
-median_house_prices_sold_usa_df
-employment_df
-
 san_francisco_median_income_df <- rename_column(san_francisco_median_income_df,"MHICA06075A052NCEN", "San Francisco Median Income")
 nyc_median_income_df <- rename_column(nyc_median_income_df,"MEHOINUSNYA646N", "NYC Median Income")
 miami_median_income_df <- rename_column(miami_median_income_df,"MEHOINUSFLA646N", "Miami Median Income")
+median_household_income_usa_df <- rename_column(median_household_income_usa_df,"MEHOINUSA646N", "USA Median Income")
+
 cpi_df <- rename_column(cpi_df,"CPIAUCSL", "CPI Index")
 median_house_prices_sold_usa_df <- rename_column(median_house_prices_sold_usa_df,"MSPUS", "Median Housing Price Sold USA")
 employment_df <- rename_column(employment_df,"PAYEMS", "Population Employed USA Thousand Per Person")
-
 
 san_francisco_electricity_df <- rename_column(san_francisco_electricity_df,"Electricity Cost per Kilowatt-Hour", "San Francisco Electricity Cost per Kilowatt-Hour")
 electricity_df <- rename_column(electricity_df,"Electricity Cost per Kilowatt-Hour", "USA Electricity Cost per Kilowatt-Hour")
@@ -267,6 +258,103 @@ ggplot(data = scatter_data, aes(x = Date, y = Electricity_Cost, color = Region))
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+san_francisco_median_income_df <- san_francisco_median_income_df %>%
+  mutate(DATE = as.Date(DATE))
+
+nyc_median_income_df <- nyc_median_income_df %>%
+  mutate(DATE = as.Date(DATE))
+
+miami_median_income_df <- miami_median_income_df %>%
+  mutate(DATE = as.Date(DATE))
+
+median_household_income_usa_df <- median_household_income_usa_df %>%
+  mutate(DATE = as.Date(DATE))
+
+merged_income_df <- san_francisco_median_income_df %>%
+  full_join(nyc_median_income_df, by = "DATE") %>%
+  full_join(miami_median_income_df, by = "DATE") %>%
+  full_join(median_household_income_usa_df, by = "DATE")
+
+merged_income_df <- merged_income_df %>%
+  select(-starts_with("Date.")) %>% 
+  slice(-1)                       
+
+merged_income_df <- merged_income_df %>%
+  mutate(across(
+    c(`San Francisco Median Income`, `NYC Median Income`, `Miami Median Income`, `USA Median Income`),
+    ~ as.numeric(.)
+  ))
+
+
+head(merged_income_df)
+
+```
+
+
+```{r}
+ggplot(data = merged_income_df, aes(x = DATE)) +
+  geom_line(aes(y = `San Francisco Median Income`, color = "San Francisco"), size = 1) +
+  geom_line(aes(y = `NYC Median Income`, color = "NYC"), size = 1) +
+  geom_line(aes(y = `Miami Median Income`, color = "Miami"), size = 1) +
+  geom_line(aes(y = `USA Median Income`, color = "USA"), size = 1) +
+  labs(
+    title = "Median Income Trends Over Time",
+    x = "Year",
+    y = "Median Income",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+long_income_df <- merged_income_df %>%
+  pivot_longer(
+    cols = -DATE,
+    names_to = "Region",
+    values_to = "Median_Income"
+  )
+
+ggplot(long_income_df, aes(x = Region, y = Median_Income, fill = Region)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribution of Median Incomes by Region",
+    x = "Region",
+    y = "Median Income"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ggplot(long_income_df, aes(x = Median_Income, fill = Region)) +
+  geom_density(alpha = 0.7) +
+  labs(
+    title = "Density Plot of Median Incomes by Region",
+    x = "Median Income",
+    y = "Density",
+    fill = "Region"
+  ) +
+  theme_minimal()
+
+
+```
+
+NEED TO BE PLOTTED
+```{r}
+spy_df 
+cpi_df
+m2_money_supply_df 
+median_house_prices_sold_usa_df 
+employment_df 
+colnames(spy_df)
+colnames(cpi_df)
+colnames(m2_money_supply_df)
+colnames(median_house_prices_sold_usa_df)
+colnames(employment_df)
 
 ```
 
