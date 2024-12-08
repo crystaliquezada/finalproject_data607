@@ -30,6 +30,8 @@ First, the raw housing data is loaded directly from a CSV file hosted in a GitHu
 libraries
 ```{r}
 library(readr)
+library(tidyr)
+library(dplyr)
 
 
 ```
@@ -74,6 +76,12 @@ head(employment_df)
 
 load nyc dataset
 ```{r}
+nyc_median_income_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/new%20york%20tristate/nyc_median_household_income.csv"
+nyc_tristate_electricity_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/new%20york%20tristate/nyc_tristate_electricity.csv"
+
+nyc_median_income_df <- read_csv(nyc_median_income_url)
+nyc_tristate_electricity_df <- read_csv(nyc_tristate_electricity_url)
+
 
 ```
 
@@ -81,15 +89,64 @@ load nyc dataset
 load miami dataset
 
 ```{r}
+miami_electricity_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/miami/miami_electricity.csv"
+miami_median_income_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/miami/miami_median_household_income.csv"
+
+miami_electricity_df <- read_csv(miami_electricity_url)
+miami_median_income_df <- read_csv(miami_median_income_url)
 
 
 ```
 
 
-
-
 load califonia dataset
 ```{r}
+san_francisco_electricity_url  <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/california/san_francisco_electricity.csv"
+san_francisco_median_income_url  <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/california/san_francisco_median_household_income.csv"
+san_francisco_electricity_df <- read_csv(san_francisco_electricity_url )
+san_francisco_median_income_df <- read_csv(san_francisco_median_income_url)
+
+
+head(san_francisco_median_income_df)
+
+```
+
+### Data Transformation
+
+
+Electrcity Df Transformation
+```{r}
+transform_electricity_data <- function(df) {
+  transformed_df <- df %>%
+    pivot_longer(
+      cols = -Year, 
+      names_to = "Month", 
+      values_to = "Electricity Cost per Kilowatt-Hour" 
+    ) %>%
+    mutate(
+      Date = as.Date(paste(Year, Month, "01", sep = "-"), format = "%Y-%b-%d")
+    ) %>%
+    select(Date, `Electricity Cost per Kilowatt-Hour`)
+  
+  return(transformed_df)
+}
+
+san_francisco_electricity_df <- transform_electricity_data(san_francisco_electricity_df)
+electricity_df <- transform_electricity_data(electricity_df)
+nyc_tristate_electricity_df <- transform_electricity_data(nyc_tristate_electricity_df)
+miami_electricity_df<- transform_electricity_data(miami_electricity_df)
+
+```
+rename columns
+```{r}
+rename_column <- function(df, old_col_name, new_col_name) {
+  renamed_df <- df %>%
+    rename(!!new_col_name := !!sym(old_col_name))
+  
+  return(renamed_df)
+}
+
+
 
 
 ```
