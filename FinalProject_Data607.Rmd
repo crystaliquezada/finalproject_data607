@@ -32,6 +32,7 @@ libraries
 library(readr)
 library(tidyr)
 library(dplyr)
+library(ggplot2)
 
 
 ```
@@ -133,6 +134,7 @@ electricity_df <- transform_electricity_data(electricity_df)
 nyc_tristate_electricity_df <- transform_electricity_data(nyc_tristate_electricity_df)
 miami_electricity_df<- transform_electricity_data(miami_electricity_df)
 
+
 ```
 rename columns
 ```{r}
@@ -161,6 +163,13 @@ cpi_df <- rename_column(cpi_df,"CPIAUCSL", "CPI Index")
 median_house_prices_sold_usa_df <- rename_column(median_house_prices_sold_usa_df,"MSPUS", "Median Housing Price Sold USA")
 employment_df <- rename_column(employment_df,"PAYEMS", "Population Employed USA Thousand Per Person")
 
+
+san_francisco_electricity_df <- rename_column(san_francisco_electricity_df,"Electricity Cost per Kilowatt-Hour", "San Francisco Electricity Cost per Kilowatt-Hour")
+electricity_df <- rename_column(electricity_df,"Electricity Cost per Kilowatt-Hour", "USA Electricity Cost per Kilowatt-Hour")
+nyc_tristate_electricity_df <- rename_column(nyc_tristate_electricity_df,"Electricity Cost per Kilowatt-Hour", "NYC Electricity Cost per Kilowatt-Hour")
+miami_electricity_df<- rename_column(miami_electricity_df,"Electricity Cost per Kilowatt-Hour", "Miami Electricity Cost per Kilowatt-Hour")
+
+
 ```
 
 Filter Undeeded columns 
@@ -168,7 +177,81 @@ Filter Undeeded columns
 spy_df <- spy_df %>%
   select(Date, Price)
 ```
+Merge electricty data into a one df
+```{r}
+merged_electricity_df <- san_francisco_electricity_df %>%
+  full_join(electricity_df, by = "Date") %>%
+  full_join(nyc_tristate_electricity_df, by = "Date") %>%
+  full_join(miami_electricity_df, by = "Date")
 
+head(merged_electricity_df)
+
+
+```
+
+
+```{r}
+ggplot(data = merged_electricity_df, aes(x = Date)) +
+  geom_line(aes(y = `San Francisco Electricity Cost per Kilowatt-Hour`, color = "San Francisco"), size = 1) +
+  geom_line(aes(y = `USA Electricity Cost per Kilowatt-Hour`, color = "USA"), size = 1) +
+  geom_line(aes(y = `NYC Electricity Cost per Kilowatt-Hour`, color = "NYC"), size = 1) +
+  geom_line(aes(y = `Miami Electricity Cost per Kilowatt-Hour`, color = "Miami"), size = 1) +
+  labs(
+    title = "Electricity Costs Over Time",
+    x = "Date",
+    y = "Electricity Cost (per Kilowatt-Hour)",
+    color = "City/Region"
+  ) +
+  theme_minimal()
+
+
+heatmap_data <- merged_electricity_df %>%
+  pivot_longer(
+    cols = -Date, 
+    names_to = "Region", # New column for region names
+    values_to = "Electricity_Cost" # New column for electricity costs
+  )
+
+# Create the heatmap
+ggplot(data = heatmap_data, aes(x = Date, y = Region, fill = Electricity_Cost)) +
+  geom_tile() +
+  scale_fill_gradient(low = "blue", high = "red", name = "Electricity Cost") +
+  labs(
+    title = "Electricity Costs Over Time by Region",
+    x = "Year",
+    y = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ratio_df <- merged_electricity_df %>%
+  mutate(
+    `San Francisco Ratio` = `San Francisco Electricity Cost per Kilowatt-Hour` / `USA Electricity Cost per Kilowatt-Hour`,
+    `NYC Ratio` = `NYC Electricity Cost per Kilowatt-Hour` / `USA Electricity Cost per Kilowatt-Hour`,
+    `Miami Ratio` = `Miami Electricity Cost per Kilowatt-Hour` / `USA Electricity Cost per Kilowatt-Hour`
+  ) %>%
+  select(Date, `San Francisco Ratio`, `NYC Ratio`, `Miami Ratio`) %>%
+  pivot_longer(
+    cols = -Date, 
+    names_to = "Region",
+    values_to = "Ratio" 
+  )
+
+# Create the ratio plot
+ggplot(data = ratio_df, aes(x = Date, y = Ratio, color = Region)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Electricity Price Ratios Relative to USA Average",
+    x = "Date",
+    y = "Price Ratio",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
 
 ```{r load raw housing data}
 # load data
