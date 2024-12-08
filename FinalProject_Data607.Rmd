@@ -250,6 +250,23 @@ ggplot(data = ratio_df, aes(x = Date, y = Ratio, color = Region)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+scatter_data <- merged_electricity_df %>%
+  pivot_longer(
+    cols = -Date, 
+    names_to = "Region", 
+    values_to = "Electricity_Cost" 
+  )
+
+ggplot(data = scatter_data, aes(x = Date, y = Electricity_Cost, color = Region)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(
+    title = "Scatter Plot of Electricity Costs Over Time",
+    x = "Date",
+    y = "Electricity Cost (per Kilowatt-Hour)",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
