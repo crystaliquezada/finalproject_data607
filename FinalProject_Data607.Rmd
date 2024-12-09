@@ -5,16 +5,19 @@ date: "2024-12-06"
 output: html_document
 ---
 
+Libraries
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)                         
 options(repos = c(CRAN = "https://cran.rstudio.com"))
 
-# install packages
 library(tidyverse)
 library(tidyr)
 library(dbplyr)
-install.packages("janitor")
 library(janitor)
+library(readr)
+library(dplyr)
+library(ggplot2)
+
 ```
 
 
@@ -27,19 +30,9 @@ This project investigates the relationship between socioeconomic factors and the
 
 First, the raw housing data is loaded directly from a CSV file hosted in a GitHub repository.
 
-libraries
-```{r}
-library(readr)
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-
-
-```
 
 load USA dataset
 ```{r}
-spy_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/SPY%20ETF%20Stock%20Price%20History.csv"
 cpi_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/cpi.csv"
 electricity_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/electricity_price_city_usa.csv"
 m2_money_supply_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/m2_money_supply.csv"
@@ -47,29 +40,12 @@ median_house_prices_sold_usa_url <- "https://raw.githubusercontent.com/crystaliq
 employment_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/total_non_farm_employment.csv"
 median_household_income_usa_url <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/median_household_income_usa.csv"
 
-spy_df <- read_csv(spy_url)
 cpi_df <- read_csv(cpi_url)
 electricity_df <- read_csv(electricity_url)
 m2_money_supply_df <- read_csv(m2_money_supply_url)
 median_house_prices_sold_usa_df <- read_csv(median_house_prices_sold_usa_url)
 employment_df <- read_csv(employment_url)
 median_household_income_usa_df <- read.csv(median_household_income_usa_url)
-head(median_household_income_usa_df)
-#temp code, will be removed later 
-head(spy_df)
-
-head(cpi_df)
-
-head(electricity_df)
-
-head(monthly_median_housing_price_df)
-
-head(m2_money_supply_df)
-
-head(median_house_prices_sold_usa_df)
-
-head(employment_df)
-
 
 
 ```
@@ -199,8 +175,8 @@ ggplot(data = merged_electricity_df, aes(x = Date)) +
 heatmap_data <- merged_electricity_df %>%
   pivot_longer(
     cols = -Date, 
-    names_to = "Region", # New column for region names
-    values_to = "Electricity_Cost" # New column for electricity costs
+    names_to = "Region", 
+    values_to = "Electricity_Cost" 
   )
 
 # Create the heatmap
@@ -330,31 +306,685 @@ ggplot(long_income_df, aes(x = Region, y = Median_Income, fill = Region)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-ggplot(long_income_df, aes(x = Median_Income, fill = Region)) +
-  geom_density(alpha = 0.7) +
+
+```
+
+
+
+cpi
+```{r}
+ggplot(cpi_df, aes(x = as.Date(DATE), y = `CPI Index`)) +
+  geom_line(color = "red", size = 1) +
   labs(
-    title = "Density Plot of Median Incomes by Region",
-    x = "Median Income",
-    y = "Density",
-    fill = "Region"
+    title = "CPI Index Over Time",
+    x = "Date",
+    y = "CPI Index"
+  ) +
+  theme_minimal()
+colnames(cpi_df)
+
+# Calculate the growth rate for CPI
+cpi_plot_df <- cpi_df %>%
+  arrange(as.Date(DATE)) %>% 
+  mutate(Growth_Rate = (`CPI Index` - lag(`CPI Index`)) / lag(`CPI Index`) * 100) # Percentage growth
+
+# Create the growth rate line plot
+ggplot(cpi_plot_df, aes(x = as.Date(DATE), y = Growth_Rate)) +
+  geom_line(color = "red", size = 1) +
+  labs(
+    title = "CPI Growth Rate Over Time",
+    x = "Date",
+    y = "Growth Rate (%)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+
+m2 money supply 
+```{r}
+ggplot(m2_money_supply_df, aes(x = as.Date(DATE), y = M2SL)) +
+  geom_line(color = "green", size = 1) +
+  labs(
+    title = "M2 Money Supply Over Time",
+    x = "Date",
+    y = "M2SL (Money Supply)"
+  ) +
+  theme_minimal()
+
+m2_money_supply_plot_df <- m2_money_supply_df %>%
+  mutate(Growth_Rate = (M2SL - lag(M2SL)) / lag(M2SL) * 100)
+ggplot(m2_money_supply_plot_df, aes(x = as.Date(DATE), y = Growth_Rate)) +
+  geom_line(color = "green", size = 1) +
+  labs(title = "Growth Rate of M2 Money Supply", x = "Date", y = "Growth Rate (%)") +
+  theme_minimal()
+
+
+
+```
+
+median house hold prices sold
+```{r}
+ggplot(median_house_prices_sold_usa_df, aes(x = as.Date(DATE), y = `Median Housing Price Sold USA`)) +
+  geom_line(color = "purple", size = 1) +
+  labs(
+    title = "Median Housing Prices Sold in the USA Over Time",
+    x = "Date",
+    y = "Median Housing Price"
+  ) +
+  theme_minimal()
+
+
+
+
+```
+
+
+
+```{r}
+ggplot(employment_df, aes(x = as.Date(DATE), y = `Population Employed USA Thousand Per Person`)) +
+  geom_line(color = "orange", size = 1) +
+  labs(
+    title = "USA Population Employed (Thousands) Over Time",
+    x = "Date",
+    y = "Population Employed (Thousands)"
+  ) +
+  theme_minimal()
+
+
+
+employment_plot_df <- employment_df %>%
+  mutate(Year = format(as.Date(DATE), "%Y")) %>%
+  group_by(Year) %>%
+  summarize(Annual_Change = last(`Population Employed USA Thousand Per Person`) -
+                              first(`Population Employed USA Thousand Per Person`))
+ggplot(employment_plot_df, aes(x = Year, y = Annual_Change)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  labs(title = "Annual Changes in Employment", x = "Year", y = "Change in Employment (Thousands)") +
+  theme_minimal()
+
+
+```
+
+
+
+### NYC Analysis on income
+
+```{r}
+
+merged_electricity_df <- merged_electricity_df %>% rename(DATE = Date)
+
+nyc_data <- merged_income_df %>%
+  select(DATE, `NYC Median Income`) %>%
+  rename(Median_Income = `NYC Median Income`) %>%
+  left_join(
+    merged_electricity_df %>% select(DATE, `NYC Electricity Cost per Kilowatt-Hour`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    cpi_df %>% rename(CPI_Index = `CPI Index`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    m2_money_supply_df,
+    by = "DATE"
+  ) %>%
+  left_join(
+    employment_df %>% rename(Employment_Thousands = `Population Employed USA Thousand Per Person`),
+    by = "DATE"
+  )
+
+nyc_data_clean <- nyc_data %>% na.omit()
+
+regression_model <- lm(
+  Median_Income ~ `NYC Electricity Cost per Kilowatt-Hour` + CPI_Index + M2SL + Employment_Thousands,
+  data = nyc_data_clean
+)
+
+summary(regression_model)
+```
+
+# Regression Analysis: NYC Median Income
+
+## 1. Overall Model Fit
+- **Multiple R-squared (0.9849)**:
+  - This indicates that 98.49% of the variation in NYC Median Income is explained by the predictors (`NYC Electricity Cost per Kilowatt-Hour`, `CPI Index`, `M2SL`, and `Employment_Thousands`).
+  - A very high R-squared suggests the model fits the data well.
+- **Adjusted R-squared (0.9828)**:
+  - This value adjusts for the number of predictors and confirms that the model explains a significant portion of the variation, even after accounting for the complexity of the model.
+- **F-statistic (473.5, p < 2.2e-16)**:
+  - The overall model is highly significant, indicating that at least one predictor has a meaningful relationship with NYC Median Income.
+
+## 2. Coefficients
+Each coefficient represents the estimated impact of a one-unit increase in the predictor on NYC Median Income, holding other variables constant:
+
+- **Intercept (-19,940)**:
+  - When all predictors are zero, the model predicts a baseline NYC Median Income of -$19,940.
+  - This value is not interpretable in a practical sense because predictors like M2SL and employment can't be zero.
+
+- **NYC Electricity Cost per Kilowatt-Hour (-12,450)**:
+  - **Estimate**: A $1 increase in NYC electricity cost is associated with a $12,450 decrease in NYC Median Income.
+  - **p-value (0.661)**: Not statistically significant (p > 0.05), meaning there's no strong evidence that electricity costs impact median income in NYC.
+
+- **CPI Index (-3.92)**:
+  - **Estimate**: A one-unit increase in the CPI Index is associated with a $3.92 decrease in NYC Median Income.
+  - **p-value (0.943)**: Not statistically significant (p > 0.05). CPI does not have a measurable direct impact on NYC Median Income in this model.
+
+- **M2 Money Supply (1.82)**:
+  - **Estimate**: A $1 billion increase in M2 money supply is associated with a $1.82 increase in NYC Median Income.
+  - **p-value (3.20e-09)**: Highly statistically significant (p < 0.001). There’s a strong positive correlation between M2 and NYC Median Income.
+
+- **Employment Levels (0.427)**:
+  - **Estimate**: An increase of 1,000 employed persons in the USA is associated with a $0.427 increase in NYC Median Income.
+  - **p-value (7.17e-05)**: Highly statistically significant (p < 0.001). Employment levels are strongly correlated with NYC Median Income.
+
+## 3. Residuals
+Residuals represent the differences between observed and predicted values:
+- The residuals are relatively small, with a standard error of 1853, indicating that the model predicts NYC Median Income fairly accurately.
+
+## 4. Key Takeaways
+### Significant Predictors:
+- `M2SL` and `Employment_Thousands` have statistically significant positive relationships with NYC Median Income.
+  - This suggests that broader economic growth (as captured by M2 money supply) and higher employment levels significantly drive median income in NYC.
+
+### Insignificant Predictors:
+- `NYC Electricity Cost per Kilowatt-Hour` and `CPI Index` are not statistically significant, meaning there’s no strong evidence that these directly influence NYC Median Income in this model.
+
+## 5. Correlation
+- Yes, there is a strong correlation between NYC Median Income and both `M2SL` and `Employment_Thousands`, as evidenced by their significance levels and positive coefficients.
+- However, no significant correlation is found with electricity costs or CPI Index.
+
+
+
+```{r}
+ggplot(nyc_data_clean, aes(x = M2SL, y = Median_Income)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between M2 Money Supply and NYC Median Income",
+    x = "M2 Money Supply (Billion USD)",
+    y = "NYC Median Income"
+  ) +
+  theme_minimal()
+
+
+ggplot(nyc_data_clean, aes(x = Employment_Thousands, y = Median_Income)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between Employment Levels and NYC Median Income",
+    x = "Employment Levels (Thousands)",
+    y = "NYC Median Income"
+  ) +
+  theme_minimal()
+
+ggplot(nyc_data_clean, aes(x = M2SL, y = Median_Income, color = Employment_Thousands)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  scale_color_gradient(low = "lightblue", high = "darkblue", name = "Employment Levels") +
+  labs(
+    title = "Combined Effect of M2 Money Supply and Employment on NYC Median Income",
+    x = "M2 Money Supply (Billion USD)",
+    y = "NYC Median Income"
   ) +
   theme_minimal()
 
 
 ```
 
-NEED TO BE PLOTTED
+### MIAMI DATA ANALYSIS 
+
 ```{r}
-spy_df 
-cpi_df
-m2_money_supply_df 
-median_house_prices_sold_usa_df 
-employment_df 
-colnames(spy_df)
-colnames(cpi_df)
-colnames(m2_money_supply_df)
-colnames(median_house_prices_sold_usa_df)
-colnames(employment_df)
+
+# Merge and clean the Miami-specific data
+miami_data <- merged_income_df %>%
+  select(DATE, `Miami Median Income`) %>%
+  rename(Median_Income = `Miami Median Income`) %>%
+  left_join(
+    merged_electricity_df %>% select(DATE, `Miami Electricity Cost per Kilowatt-Hour`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    cpi_df %>% rename(CPI_Index = `CPI Index`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    m2_money_supply_df,
+    by = "DATE"
+  ) %>%
+  left_join(
+    employment_df %>% rename(Employment_Thousands = `Population Employed USA Thousand Per Person`),
+    by = "DATE"
+  )
+
+miami_data_clean <- miami_data %>% na.omit()
+
+regression_model_miami <- lm(
+  Median_Income ~ `Miami Electricity Cost per Kilowatt-Hour` + CPI_Index + M2SL + Employment_Thousands,
+  data = miami_data_clean
+)
+
+summary(regression_model_miami)
+
+```
+# Regression Analysis: Miami Median Income
+
+## 1. Overall Model Fit
+- **Multiple R-squared (0.9862)**:
+  - The model explains 98.62% of the variation in Miami Median Income, indicating a very strong fit.
+- **Adjusted R-squared (0.9842)**:
+  - After accounting for the number of predictors, the model still explains a substantial portion of the variation in Miami Median Income.
+- **F-statistic (516.3, p < 2.2e-16)**:
+  - The overall model is highly significant, meaning at least one predictor has a strong relationship with Miami Median Income.
+
+## 2. Coefficients
+Each coefficient represents the estimated impact of a one-unit increase in the predictor on Miami Median Income, holding other variables constant:
+
+- **Intercept (-23,830)**:
+  - When all predictors are zero, the model predicts a baseline Miami Median Income of -$23,830.
+  - This value is not meaningful since predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+
+- **Miami Electricity Cost per Kilowatt-Hour (79,090)**:
+  - **Estimate**: A $1 increase in electricity costs is associated with a $79,090 increase in Miami Median Income.
+  - **p-value (0.0167)**: Statistically significant (p < 0.05), suggesting that electricity costs have a meaningful positive relationship with Miami Median Income.
+
+- **CPI Index (23.85)**:
+  - **Estimate**: A one-unit increase in the CPI Index is associated with a $23.85 increase in Miami Median Income.
+  - **p-value (0.4971)**: Not statistically significant (p > 0.05), meaning CPI does not have a measurable impact on Miami Median Income in this model.
+
+- **M2 Money Supply (0.9229)**:
+  - **Estimate**: A $1 billion increase in M2 money supply is associated with a $0.9229 increase in Miami Median Income.
+  - **p-value (8.56e-06)**: Highly statistically significant (p < 0.001). There is a strong positive relationship between M2 money supply and Miami Median Income.
+
+- **Employment Levels (0.3488)**:
+  - **Estimate**: An increase of 1,000 employed persons in the USA is associated with a $0.3488 increase in Miami Median Income.
+  - **p-value (3.65e-06)**: Highly statistically significant (p < 0.001). Employment levels are strongly correlated with Miami Median Income.
+
+## 3. Residuals
+- **Residual Standard Error (1437)**:
+  - Indicates the typical difference between observed and predicted values for Miami Median Income.
+  - The residuals are smaller compared to the NYC model, suggesting more precise predictions for Miami.
+
+## 4. Key Takeaways
+### Significant Predictors:
+- **Miami Electricity Costs**: Unlike NYC, electricity costs are significant for Miami and positively correlated with median income. This may reflect higher energy expenses in the region influencing income.
+- **M2SL and Employment Levels**: These remain highly significant, as in NYC, indicating broader economic factors (monetary supply and job availability) are key drivers of income.
+
+### Insignificant Predictors:
+- **CPI Index**: Similar to NYC, CPI does not show a significant relationship with Miami Median Income in this model.
+
+## 5. Comparison with NYC
+- **Electricity Costs**: Significant for Miami but not for NYC, likely reflecting regional differences in cost structures and energy consumption.
+- **CPI**: Insignificant in both cities.
+- **M2 Money Supply and Employment Levels**: Consistently significant and positively correlated with median income in both cities.
+
+
+```{r}
+ggplot(miami_data_clean, aes(x = M2SL, y = Median_Income)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between M2 Money Supply and Miami Median Income",
+    x = "M2 Money Supply (Billion USD)",
+    y = "Miami Median Income"
+  ) +
+  theme_minimal()
+
+
+ggplot(miami_data_clean, aes(x = Employment_Thousands, y = Median_Income)) +
+  geom_point(color = "green", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between Employment Levels and Miami Median Income",
+    x = "Employment Levels (Thousands)",
+    y = "Miami Median Income"
+  ) +
+  theme_minimal()
+
+
+```
+
+### San Francisco DATA ANALYSIS 
+
+
+```{r}
+
+# Merge and clean the San Francisco-specific data
+sf_data <- merged_income_df %>%
+  select(DATE, `San Francisco Median Income`) %>%
+  rename(Median_Income = `San Francisco Median Income`) %>%
+  left_join(
+    merged_electricity_df %>% select(DATE, `San Francisco Electricity Cost per Kilowatt-Hour`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    cpi_df %>% rename(CPI_Index = `CPI Index`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    m2_money_supply_df,
+    by = "DATE"
+  ) %>%
+  left_join(
+    employment_df %>% rename(Employment_Thousands = `Population Employed USA Thousand Per Person`),
+    by = "DATE"
+  )
+
+sf_data_clean <- sf_data %>% na.omit()
+
+regression_model_sf <- lm(
+  Median_Income ~ `San Francisco Electricity Cost per Kilowatt-Hour` + CPI_Index + M2SL + Employment_Thousands,
+  data = sf_data_clean
+)
+
+summary(regression_model_sf)
+
+
+```
+
+# Regression Analysis: San Francisco Median Income
+
+## 1. Overall Model Fit
+- **Multiple R-squared (0.9803)**:
+  - The model explains 98.03% of the variation in San Francisco Median Income, indicating a very strong fit.
+- **Adjusted R-squared (0.9768)**:
+  - After accounting for the number of predictors, the model still explains a substantial portion of the variation in San Francisco Median Income.
+- **F-statistic (285.5, p < 2.2e-16)**:
+  - The overall model is highly significant, meaning at least one predictor has a strong relationship with San Francisco Median Income.
+
+## 2. Coefficients
+Each coefficient represents the estimated impact of a one-unit increase in the predictor on San Francisco Median Income, holding other variables constant:
+
+- **Intercept (-71,630)**:
+  - When all predictors are zero, the model predicts a baseline San Francisco Median Income of -$71,630.
+  - This value is not meaningful since predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+
+- **San Francisco Electricity Cost per Kilowatt-Hour (-163,700)**:
+  - **Estimate**: A $1 increase in electricity costs is associated with a $163,700 decrease in San Francisco Median Income.
+  - **p-value (0.04441)**: Statistically significant (p < 0.05), suggesting electricity costs have a meaningful negative relationship with San Francisco Median Income. This may reflect a cost burden reducing disposable income.
+
+- **CPI Index (217.2)**:
+  - **Estimate**: A one-unit increase in the CPI Index is associated with a $217.2 increase in San Francisco Median Income.
+  - **p-value (0.18877)**: Not statistically significant (p > 0.05), meaning CPI does not have a measurable impact on San Francisco Median Income in this model.
+
+- **M2 Money Supply (4.249)**:
+  - **Estimate**: A $1 billion increase in M2 money supply is associated with a $4.249 increase in San Francisco Median Income.
+  - **p-value (1.79e-07)**: Highly statistically significant (p < 0.001). There is a strong positive relationship between M2 money supply and San Francisco Median Income.
+
+- **Employment Levels (0.6837)**:
+  - **Estimate**: An increase of 1,000 employed persons in the USA is associated with a $0.6837 increase in San Francisco Median Income.
+  - **p-value (0.01977)**: Statistically significant (p < 0.05). Employment levels are positively correlated with San Francisco Median Income.
+
+## 3. Residuals
+- **Residual Standard Error (4324)**:
+  - Indicates the typical difference between observed and predicted values for San Francisco Median Income.
+  - Residuals are larger than for Miami and NYC, suggesting slightly less precise predictions for San Francisco.
+
+## 4. Key Takeaways
+### Significant Predictors:
+- **San Francisco Electricity Costs**:
+  - Unlike Miami, electricity costs are significant and negatively correlated with income in San Francisco.
+  - This may reflect the impact of higher utility costs reducing disposable income or affecting living standards.
+- **M2 Money Supply**:
+  - Remains highly significant and positively correlated, as seen in NYC and Miami.
+- **Employment Levels**:
+  - Positively correlated and significant, highlighting the role of national employment trends in driving income.
+
+### Insignificant Predictors:
+- **CPI Index**:
+  - As with NYC and Miami, CPI is not a significant predictor for San Francisco Median Income.
+
+## 5. Comparison with NYC and Miami
+- **Electricity Costs**:
+  - Positive for Miami, negative for San Francisco, and insignificant for NYC. This highlights regional differences in how electricity costs impact median income.
+- **M2 Money Supply and Employment Levels**:
+  - Consistently significant and positively correlated with median income across all three cities.
+- **CPI**:
+  - Insignificant in all three cities.
+
+```{r}
+ggplot(sf_data_clean, aes(x = M2SL, y = Median_Income)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between M2 Money Supply and San Francisco Median Income",
+    x = "M2 Money Supply (Billion USD)",
+    y = "San Francisco Median Income"
+  ) +
+  theme_minimal()
+
+ggplot(sf_data_clean, aes(x = Employment_Thousands, y = Median_Income)) +
+  geom_point(color = "green", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between Employment Levels and San Francisco Median Income",
+    x = "Employment Levels (Thousands)",
+    y = "San Francisco Median Income"
+  ) +
+  theme_minimal()
+
+
+```
+
+### USA DATA ANALYSIS
+
+```{r}
+# Merge and clean the USA-specific data
+usa_data <- merged_income_df %>%
+  select(DATE, `USA Median Income`) %>%
+  rename(Median_Income = `USA Median Income`) %>%
+  left_join(
+    merged_electricity_df %>% select(DATE, `USA Electricity Cost per Kilowatt-Hour`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    cpi_df %>% rename(CPI_Index = `CPI Index`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    m2_money_supply_df,
+    by = "DATE"
+  ) %>%
+  left_join(
+    employment_df %>% rename(Employment_Thousands = `Population Employed USA Thousand Per Person`),
+    by = "DATE"
+  )
+
+usa_data_clean <- usa_data %>% na.omit()
+
+
+regression_model_usa <- lm(
+  Median_Income ~ `USA Electricity Cost per Kilowatt-Hour` + CPI_Index + M2SL + Employment_Thousands,
+  data = usa_data_clean
+)
+
+summary(regression_model_usa)
+
+
+```
+
+# Regression Analysis: USA Median Income
+
+## 1. Overall Model Fit
+- **Multiple R-squared (0.9946)**:
+  - The model explains 99.46% of the variation in USA Median Income, indicating an exceptionally strong fit.
+- **Adjusted R-squared (0.9939)**:
+  - After accounting for the number of predictors, the model still explains a substantial portion of the variation in USA Median Income.
+- **F-statistic (1345, p < 2.2e-16)**:
+  - The overall model is highly significant, meaning at least one predictor has a strong relationship with USA Median Income.
+
+## 2. Coefficients
+Each coefficient represents the estimated impact of a one-unit increase in the predictor on USA Median Income, holding other variables constant:
+
+- **Intercept (-23,060)**:
+  - When all predictors are zero, the model predicts a baseline USA Median Income of -$23,060.
+  - This value is not meaningful as predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+
+- **USA Electricity Cost per Kilowatt-Hour (13,410)**:
+  - **Estimate**: A $1 increase in electricity costs is associated with a $13,410 increase in USA Median Income.
+  - **p-value (0.715)**: Not statistically significant (p > 0.05), suggesting that electricity costs do not have a measurable impact on USA Median Income in this model.
+
+- **CPI Index (21.60)**:
+  - **Estimate**: A one-unit increase in the CPI Index is associated with a $21.60 increase in USA Median Income.
+  - **p-value (0.578)**: Not statistically significant (p > 0.05). CPI does not have a meaningful relationship with USA Median Income in this model.
+
+- **M2 Money Supply (1.383)**:
+  - **Estimate**: A $1 billion increase in M2 money supply is associated with a $1.383 increase in USA Median Income.
+  - **p-value (7.14e-12)**: Highly statistically significant (p < 0.001). There is a strong positive relationship between M2 money supply and USA Median Income.
+
+- **Employment Levels (0.4108)**:
+  - **Estimate**: An increase of 1,000 employed persons in the USA is associated with a $0.4108 increase in USA Median Income.
+  - **p-value (1.28e-07)**: Highly statistically significant (p < 0.001). Employment levels are strongly correlated with USA Median Income.
+
+## 3. Residuals
+- **Residual Standard Error (1054)**:
+  - Indicates the typical difference between observed and predicted values for USA Median Income.
+  - Residuals are smaller compared to the city-specific models, suggesting more precise predictions.
+
+## 4. Key Takeaways
+### Significant Predictors:
+- **M2 Money Supply**:
+  - Highly significant and positively correlated with USA Median Income, as in the city-level analyses.
+- **Employment Levels**:
+  - Also highly significant and positively correlated, highlighting the importance of job availability and labor market trends.
+
+### Insignificant Predictors:
+- **USA Electricity Costs**:
+  - Not significant, suggesting electricity costs do not directly drive USA Median Income.
+- **CPI Index**:
+  - As with NYC, Miami, and SF, CPI is not a significant predictor in this model.
+
+```{r}
+ggplot(usa_data_clean, aes(x = M2SL, y = Median_Income)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between M2 Money Supply and USA Median Income",
+    x = "M2 Money Supply (Billion USD)",
+    y = "USA Median Income"
+  ) +
+  theme_minimal()
+
+ggplot(usa_data_clean, aes(x = Employment_Thousands, y = Median_Income)) +
+  geom_point(color = "green", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between Employment Levels and USA Median Income",
+    x = "Employment Levels (Thousands)",
+    y = "USA Median Income"
+  ) +
+  theme_minimal()
+
+
+```
+### USA DATA ANAYSIS FOR HOUSING
+
+```{r}
+# Merge and clean USA Median Housing Price data
+usa_housing_data <- median_house_prices_sold_usa_df %>%
+  left_join(
+    cpi_df %>% rename(CPI_Index = `CPI Index`),
+    by = "DATE"
+  ) %>%
+  left_join(
+    m2_money_supply_df,
+    by = "DATE"
+  ) %>%
+  left_join(
+    employment_df %>% rename(Employment_Thousands = `Population Employed USA Thousand Per Person`),
+    by = "DATE"
+  )
+
+usa_housing_data_clean <- usa_housing_data %>% na.omit()
+
+regression_model_housing <- lm(
+  `Median Housing Price Sold USA` ~ CPI_Index + M2SL + Employment_Thousands,
+  data = usa_housing_data_clean
+)
+
+summary(regression_model_housing)
+
+
+```
+
+# Regression Analysis: USA Median Housing Prices
+
+## 1. Overall Model Fit
+- **Multiple R-squared (0.9806)**:
+  - The model explains 98.06% of the variation in USA Median Housing Prices, indicating a very strong fit.
+- **Adjusted R-squared (0.9801)**:
+  - After accounting for the number of predictors, the model still explains a substantial portion of the variation.
+- **F-statistic (2272, p < 2.2e-16)**:
+  - The overall model is highly significant, meaning at least one predictor has a strong relationship with USA Median Housing Prices.
+
+## 2. Coefficients
+Each coefficient represents the estimated impact of a one-unit increase in the predictor on USA Median Housing Prices, holding other variables constant:
+
+- **Intercept (-160,500)**:
+  - When all predictors are zero, the model predicts a baseline USA Median Housing Price of -$160,500.
+  - This value is not meaningful, as predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+
+- **CPI Index (257.9)**:
+  - **Estimate**: A one-unit increase in the CPI Index is associated with a $257.9 increase in USA Median Housing Prices.
+  - **p-value (0.0402)**: Statistically significant (p < 0.05). Inflation (as captured by CPI) has a measurable positive relationship with housing prices.
+
+- **M2 Money Supply (9.835)**:
+  - **Estimate**: A $1 billion increase in M2 money supply is associated with a $9,835 increase in USA Median Housing Prices.
+  - **p-value (< 2e-16)**: Highly statistically significant (p < 0.001). There is a very strong positive relationship between M2 money supply and USA Median Housing Prices.
+
+- **Employment Levels (1.907)**:
+  - **Estimate**: An increase of 1,000 employed persons in the USA is associated with a $1.907 increase in USA Median Housing Prices.
+  - **p-value (4.92e-12)**: Highly statistically significant (p < 0.001). Employment levels are strongly correlated with USA Median Housing Prices.
+
+## 3. Residuals
+- **Residual Standard Error (12,780)**:
+  - Indicates the typical difference between observed and predicted values for USA Median Housing Prices.
+  - Residuals are relatively small given the large scale of housing prices.
+
+## 4. Key Takeaways
+### Significant Predictors:
+- **CPI Index**:
+  - Statistically significant and positively correlated with housing prices. Inflation drives up housing costs, as expected.
+- **M2 Money Supply**:
+  - Highly significant and positively correlated. An increase in money supply often leads to greater spending capacity and higher housing prices.
+- **Employment Levels**:
+  - Highly significant and positively correlated. More employment leads to greater demand for housing, driving up prices.
+
+```{r}
+ggplot(usa_housing_data_clean, aes(x = CPI_Index, y = `Median Housing Price Sold USA`)) +
+  geom_point(color = "purple", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between CPI Index and USA Median Housing Prices",
+    x = "CPI Index",
+    y = "USA Median Housing Prices"
+  ) +
+  theme_minimal()
+
+
+ggplot(usa_housing_data_clean, aes(x = M2SL, y = `Median Housing Price Sold USA`)) +
+  geom_point(color = "blue", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between M2 Money Supply and USA Median Housing Prices",
+    x = "M2 Money Supply (Billion USD)",
+    y = "USA Median Housing Prices"
+  ) +
+  theme_minimal()
+
+ggplot(usa_housing_data_clean, aes(x = Employment_Thousands, y = `Median Housing Price Sold USA`)) +
+  geom_point(color = "green", alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(
+    title = "Relationship Between Employment Levels and USA Median Housing Prices",
+    x = "Employment Levels (Thousands)",
+    y = "USA Median Housing Prices"
+  ) +
+  theme_minimal()
+
 
 ```
 
