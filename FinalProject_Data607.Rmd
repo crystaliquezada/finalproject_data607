@@ -18,6 +18,7 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 
+
 ```
 
 
@@ -139,11 +140,6 @@ miami_electricity_df<- rename_column(miami_electricity_df,"Electricity Cost per 
 
 ```
 
-Filter Undeeded columns 
-```{r}
-spy_df <- spy_df %>%
-  select(Date, Price)
-```
 Merge electricty data into a one df
 ```{r}
 merged_electricity_df <- san_francisco_electricity_df %>%
@@ -451,7 +447,7 @@ summary(regression_model)
 
 ## 1. Overall Model Fit
 - **Multiple R-squared (0.9849)**:
-  - This indicates that 98.49% of the variation in NYC Median Income is explained by the predictors (`NYC Electricity Cost per Kilowatt-Hour`, `CPI Index`, `M2SL`, and `Employment_Thousands`).
+  - This indicates that 98.49% of the variation in NYC Median Income is explained by the predictors (`NYC Electricity Cost per Kilowatt-Hour`, `CPI Index`, `M2 Money Supply`, and `Employment_Thousands`).
   - A very high R-squared suggests the model fits the data well.
 - **Adjusted R-squared (0.9828)**:
   - This value adjusts for the number of predictors and confirms that the model explains a significant portion of the variation, even after accounting for the complexity of the model.
@@ -463,7 +459,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 
 - **Intercept (-19,940)**:
   - When all predictors are zero, the model predicts a baseline NYC Median Income of -$19,940.
-  - This value is not interpretable in a practical sense because predictors like M2SL and employment can't be zero.
+  - This value is not interpretable in a practical sense because predictors like M2 Money Supply and employment can't be zero.
 
 - **NYC Electricity Cost per Kilowatt-Hour (-12,450)**:
   - **Estimate**: A $1 increase in NYC electricity cost is associated with a $12,450 decrease in NYC Median Income.
@@ -487,14 +483,14 @@ Residuals represent the differences between observed and predicted values:
 
 ## 4. Key Takeaways
 ### Significant Predictors:
-- `M2SL` and `Employment_Thousands` have statistically significant positive relationships with NYC Median Income.
+- `M2 Money Supply` and `Employment_Thousands` have statistically significant positive relationships with NYC Median Income.
   - This suggests that broader economic growth (as captured by M2 money supply) and higher employment levels significantly drive median income in NYC.
 
 ### Insignificant Predictors:
 - `NYC Electricity Cost per Kilowatt-Hour` and `CPI Index` are not statistically significant, meaning there’s no strong evidence that these directly influence NYC Median Income in this model.
 
 ## 5. Correlation
-- Yes, there is a strong correlation between NYC Median Income and both `M2SL` and `Employment_Thousands`, as evidenced by their significance levels and positive coefficients.
+- Yes, there is a strong correlation between NYC Median Income and both `M2 Money Supply` and `Employment_Thousands`, as evidenced by their significance levels and positive coefficients.
 - However, no significant correlation is found with electricity costs or CPI Index.
 
 
@@ -585,7 +581,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 
 - **Intercept (-23,830)**:
   - When all predictors are zero, the model predicts a baseline Miami Median Income of -$23,830.
-  - This value is not meaningful since predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+  - This value is not meaningful since predictors like `M2 Money Supply` and `Employment_Thousands` cannot realistically be zero.
 
 - **Miami Electricity Cost per Kilowatt-Hour (79,090)**:
   - **Estimate**: A $1 increase in electricity costs is associated with a $79,090 increase in Miami Median Income.
@@ -611,7 +607,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 ## 4. Key Takeaways
 ### Significant Predictors:
 - **Miami Electricity Costs**: Unlike NYC, electricity costs are significant for Miami and positively correlated with median income. This may reflect higher energy expenses in the region influencing income.
-- **M2SL and Employment Levels**: These remain highly significant, as in NYC, indicating broader economic factors (monetary supply and job availability) are key drivers of income.
+- **M2 Money Supply and Employment Levels**: These remain highly significant, as in NYC, indicating broader economic factors (monetary supply and job availability) are key drivers of income.
 
 ### Insignificant Predictors:
 - **CPI Index**: Similar to NYC, CPI does not show a significant relationship with Miami Median Income in this model.
@@ -700,7 +696,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 
 - **Intercept (-71,630)**:
   - When all predictors are zero, the model predicts a baseline San Francisco Median Income of -$71,630.
-  - This value is not meaningful since predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+  - This value is not meaningful since predictors like `M2 Money Supply` and `Employment_Thousands` cannot realistically be zero.
 
 - **San Francisco Electricity Cost per Kilowatt-Hour (-163,700)**:
   - **Estimate**: A $1 increase in electricity costs is associated with a $163,700 decrease in San Francisco Median Income.
@@ -821,7 +817,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 
 - **Intercept (-23,060)**:
   - When all predictors are zero, the model predicts a baseline USA Median Income of -$23,060.
-  - This value is not meaningful as predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+  - This value is not meaningful as predictors like `M2 Money Supply` and `Employment_Thousands` cannot realistically be zero.
 
 - **USA Electricity Cost per Kilowatt-Hour (13,410)**:
   - **Estimate**: A $1 increase in electricity costs is associated with a $13,410 increase in USA Median Income.
@@ -925,7 +921,7 @@ Each coefficient represents the estimated impact of a one-unit increase in the p
 
 - **Intercept (-160,500)**:
   - When all predictors are zero, the model predicts a baseline USA Median Housing Price of -$160,500.
-  - This value is not meaningful, as predictors like `M2SL` and `Employment_Thousands` cannot realistically be zero.
+  - This value is not meaningful, as predictors like `M2 Money Supply` and `Employment_Thousands` cannot realistically be zero.
 
 - **CPI Index (257.9)**:
   - **Estimate**: A one-unit increase in the CPI Index is associated with a $257.9 increase in USA Median Housing Prices.
@@ -1077,7 +1073,7 @@ ggplot(filtered_housingprices, aes(x = RegionName, y = Yearly_Mean, fill = Regio
 Again, we load the CSV file from GitHub.
 
 ```{r load median income data}
-rawincome <- read.csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Income.csv")
+rawincome <- read.csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/Income.csv")
 head(rawincome)
 ```
 
@@ -1167,7 +1163,7 @@ ggplot(filtered_income, aes(x = `Income by Year`, y = Metropolitan.Statistical.A
 For our homeownership rates data, we loaded the csv and removed the first few lines.
 
 ```{r load homeownership data}
-rawhomeownership <- read_csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/Homeownership%20Rates%20-%20Sheet1.csv")
+rawhomeownership <- read_csv("https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/Homeownership%20Rates%20-%20Sheet1.csv")
 rawhomeownership$`Metropolitan Statistical Area` <- gsub("[,\\.]", "", rawhomeownership$`Metropolitan Statistical Area`)
 rawhomeownership <- rawhomeownership[-c(1, 2, 3), ]
 rawhomeownership
@@ -1255,7 +1251,7 @@ ggplot(homeownership_change, aes(x = label, y = rate_of_change, fill = `metropol
 Here we load the data for non farmer jobs in the US since the 1990s.
 
 ```{r load non farmer jobs data}
-raw_nonfarmer <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/total_non_farm_employment.csv"
+raw_nonfarmer <- "https://raw.githubusercontent.com/crystaliquezada/finalproject_data607/refs/heads/main/data/usa/total_non_farm_employment.csv"
 nonfarmerjobs <- read_csv(raw_nonfarmer)
 nonfarmerjobs
 ```
