@@ -280,7 +280,8 @@ ggplot(data = merged_income_df, aes(x = DATE)) +
     color = "Region"
   ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_y_continuous(labels = scales::comma)
 
 
 
@@ -299,7 +300,8 @@ ggplot(long_income_df, aes(x = Region, y = Median_Income, fill = Region)) +
     y = "Median Income"
   ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_y_continuous(labels = scales::comma)
 
 
 
@@ -371,7 +373,8 @@ ggplot(median_house_prices_sold_usa_df, aes(x = as.Date(DATE), y = `Median Housi
     x = "Date",
     y = "Median Housing Price"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)
 
 
 
@@ -760,7 +763,8 @@ ggplot(sf_data_clean, aes(x = Employment_Thousands, y = Median_Income)) +
     x = "Employment Levels (Thousands)",
     y = "San Francisco Median Income"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)
 
 
 ```
@@ -958,7 +962,8 @@ ggplot(usa_housing_data_clean, aes(x = CPI_Index, y = `Median Housing Price Sold
     x = "CPI Index",
     y = "USA Median Housing Prices"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)
 
 
 ggplot(usa_housing_data_clean, aes(x = M2SL, y = `Median Housing Price Sold USA`)) +
@@ -969,7 +974,8 @@ ggplot(usa_housing_data_clean, aes(x = M2SL, y = `Median Housing Price Sold USA`
     x = "M2 Money Supply (Billion USD)",
     y = "USA Median Housing Prices"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)
 
 ggplot(usa_housing_data_clean, aes(x = Employment_Thousands, y = `Median Housing Price Sold USA`)) +
   geom_point(color = "green", alpha = 0.7) +
@@ -979,7 +985,8 @@ ggplot(usa_housing_data_clean, aes(x = Employment_Thousands, y = `Median Housing
     x = "Employment Levels (Thousands)",
     y = "USA Median Housing Prices"
   ) +
-  theme_minimal()
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)
 
 
 ```
@@ -1024,7 +1031,8 @@ ggplot(filtered_housingprices, aes(x = Year, y = Yearly_Mean, color = RegionName
     y = "Yearly Mean Housing Price"
   ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_y_continuous(labels = scales::comma)
 ```
 
 
@@ -1064,7 +1072,8 @@ summary(anova_housingprices)
 
 ggplot(filtered_housingprices, aes(x = RegionName, y = Yearly_Mean, fill = RegionName)) +
   geom_boxplot() +
-  labs(title = "ANOVA Comparison of Housing Prices by Region")
+  labs(title = "ANOVA Comparison of Housing Prices by Region")+
+  scale_y_continuous(labels = scales::comma)
 ```
 
 
